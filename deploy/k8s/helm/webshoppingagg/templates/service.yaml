@@ -7,6 +7,9 @@ metadata:
     chart: {{ template "webshoppingagg.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
+  annotations:
+    radius.app/application: {{ .Values.app.name }}
+    radius.app/name: {{ .Values.app.svc.webshoppingagg }}
 spec:
   type: {{ .Values.service.type }}
   ports:

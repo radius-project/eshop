@@ -10,6 +10,11 @@ metadata:
     chart: {{ template "webhooks-web.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
+  annotations:
+    radius.app/application: {{ .Values.app.name }}
+    radius.app/name: {{ .Values.app.svc.webhooksweb }}
+    radius.app/connection-identity: {{ .Values.app.svc.identity }}
+    radius.app/connection-webhooks: {{ .Values.app.svc.webhooks }}
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:

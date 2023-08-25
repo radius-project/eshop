@@ -11,6 +11,9 @@ metadata:
     chart: {{ template "webshoppingagg.chart" .}}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
+  annotations:
+    radius.app/application: {{ .Values.app.name }}
+    radius.app/name: {{ .Values.app.svc.webshoppingagg }}
 data:
   all__InstrumentationKey: "{{ .Values.inf.appinsights.key }}"
   webshoppingagg__keystore: {{ .Values.inf.redis.keystore.constr }}
