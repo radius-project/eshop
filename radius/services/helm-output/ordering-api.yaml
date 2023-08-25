@@ -1,0 +1,132 @@
+---
+# Source: ordering-api/templates/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "cfg-mychart-ordering-api"
+  labels:
+    app: ordering-api
+    chart: ordering-api-0.1.0
+    release: mychart
+    heritage: Helm
+data:
+  ordering__ConnectionString: Server=sql-data;Initial Catalog=OrderingDb;User Id=sa;Password=Pass@word;TrustServerCertificate=true;
+  urls__IdentityUrl: http://identity-api
+  all__EventBusConnection: rabbitmq
+  all__InstrumentationKey: ""
+  all__UseAzureServiceBus: "false"
+---
+# Source: ordering-api/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: ordering-api
+  labels:
+    app: ordering-api
+    chart: ordering-api-0.1.0
+    release: mychart
+    heritage: Helm
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: http
+      protocol: TCP
+      name: http
+    - port: 81
+      targetPort: grpc
+      protocol: TCP
+      name: grpc
+  selector:
+    app: ordering-api
+    release: mychart
+---
+# Source: ordering-api/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mychart-ordering-api
+  labels:
+    ufo: cfg-mychart-ordering-api
+    app: ordering-api
+    chart: ordering-api-0.1.0
+    release: mychart
+    heritage: Helm
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ordering-api
+      release: mychart
+  template:
+    metadata:
+      labels:
+        app: ordering-api
+        release: mychart
+                   
+    spec:
+      
+      containers:
+        - name: ordering-api
+          livenessProbe:
+            httpGet:
+              port: 80
+              path: /liveness
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              port: 80
+              path: /hc
+            initialDelaySeconds: 90
+            periodSeconds: 60
+            timeoutSeconds: 5                      
+          image: "eshop/ordering.api:latest"
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: PATH_BASE
+              value: /ordering-api
+            - name: k8sname
+              value: eshop-aks
+            - name: ASPNETCORE_ENVIRONMENT
+              value: "Development"
+            - name: OrchestratorType
+              value: "K8S"
+            - name: PORT
+              value: "80"
+            - name: GRPC_PORT
+              value: "81"
+            - name: ConnectionString
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-ordering-api
+                  key: ordering__ConnectionString
+            - name: ApplicationInsights__InstrumentationKey
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-ordering-api
+                  key: all__InstrumentationKey
+            - name: EventBusConnection
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-ordering-api
+                  key: all__EventBusConnection
+            - name: AzureServiceBusEnabled
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-ordering-api
+                  key: all__UseAzureServiceBus
+            - name: IdentityUrl
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-ordering-api
+                  key: urls__IdentityUrl
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+            - name: grpc
+              containerPort: 81
+              protocol: TCP              
+          resources:
+            {}

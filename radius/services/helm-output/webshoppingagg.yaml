@@ -1,0 +1,179 @@
+---
+# Source: webshoppingagg/templates/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "cfg-mychart-webshoppingagg"
+  labels:
+    app: webshoppingagg
+    chart: webshoppingagg-0.1.0
+    release: mychart
+    heritage: Helm
+data:
+  all__InstrumentationKey: ""
+  webshoppingagg__keystore: keystore-data
+  internalurls__basket: http://basket-api
+  internalurls__catalog: http://catalog-api
+  internalurls__identity: http://identity-api
+  internalurls__ordering: http://ordering-api
+  internalurls__basket__hc: http://basket-api/hc
+  internalurls__catalog__hc: http://catalog-api/hc
+  internalurls__identity__hc: http://identity-api/hc
+  internalurls__ordering__hc: http://ordering-api/hc
+  internalurls__payment__hc: http://payment-api/hc
+  internalurls__grpcBasket: "http://basket-api:81"
+  internalurls__grpcCatalog: "http://catalog-api:81"
+  internalurls__grpcOrdering: "http://ordering-api:81"
+  urls__IdentityUrlExternal: http:///identity
+---
+# Source: webshoppingagg/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: webshoppingagg
+  labels:
+    app: webshoppingagg
+    chart: webshoppingagg-0.1.0
+    release: mychart
+    heritage: Helm
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app: webshoppingagg
+    release: mychart
+---
+# Source: webshoppingagg/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mychart-webshoppingagg
+  labels:
+    app: webshoppingagg
+    chart: webshoppingagg-0.1.0
+    release: mychart
+    heritage: Helm    
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: webshoppingagg
+      release: mychart
+  template:
+    metadata:
+      labels:
+        app: webshoppingagg
+        release: mychart
+                   
+    spec:
+      
+      containers:
+        - name: webshoppingagg
+          livenessProbe:
+            httpGet:
+              port: 80
+              path: /liveness
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              port: 80
+              path: /hc
+            initialDelaySeconds: 90
+            periodSeconds: 60
+            timeoutSeconds: 5              
+          image: "eshop/webshoppingagg:latest"
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: PATH_BASE
+              value: /webshoppingagg
+            - name: k8sname
+              value: eshop-aks
+            - name: ASPNETCORE_ENVIRONMENT
+              value: "Development"
+            - name: ASPNETCORE_URLS
+              value: "http://0.0.0.0:80"
+            - name: OrchestratorType
+              value: "K8S"
+            - name: IsClusterEnv
+              value: "True"
+            - name: ApplicationInsights__InstrumentationKey
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-webshoppingagg
+                  key: all__InstrumentationKey
+            - name: urls__basket
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-webshoppingagg
+                  key: internalurls__basket
+            - name: urls__catalog
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-webshoppingagg
+                  key: internalurls__catalog
+            - name: urls__orders
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-webshoppingagg
+                  key: internalurls__ordering
+            - name: urls__identity
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-webshoppingagg
+                  key: internalurls__identity
+            - name: CatalogUrlHC
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-webshoppingagg
+                  key: internalurls__catalog__hc
+            - name: BasketUrlHC
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-webshoppingagg
+                  key: internalurls__basket__hc
+            - name: IdentityUrlHC
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-webshoppingagg
+                  key: internalurls__identity__hc
+            - name: OrderingUrlHC
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-webshoppingagg
+                  key: internalurls__ordering__hc
+            - name: PaymentUrlHC
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-webshoppingagg
+                  key: internalurls__payment__hc
+            - name: urls__grpcBasket
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-webshoppingagg
+                  key: internalurls__grpcBasket
+            - name: urls__grpcCatalog
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-webshoppingagg
+                  key: internalurls__grpcCatalog
+            - name: urls__grpcOrdering
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-webshoppingagg
+                  key: internalurls__grpcOrdering
+            - name: IdentityUrlExternal
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-webshoppingagg
+                  key: urls__IdentityUrlExternal
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+          resources:
+            {}

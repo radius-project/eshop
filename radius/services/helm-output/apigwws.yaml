@@ -1,0 +1,177 @@
+---
+# Source: apigwws/templates/envoy-cm.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "envoy-mychart-apigwws"
+  labels:
+    app: apigwws
+    chart: apigwws-0.1.0
+    release: mychart
+    heritage: Helm
+data:
+  envoy.yaml: "admin:\r\n  access_log_path: \"/dev/null\"\r\n  address:\r\n    socket_address:\r\n
+    \     address: 0.0.0.0\r\n      port_value: 8001\r\nstatic_resources:\r\n  listeners:\r\n
+    \ - address:\r\n      socket_address:\r\n        address: 0.0.0.0\r\n        port_value:
+    8080\r\n    filter_chains:\r\n    - filters:\r\n      - name: envoy.filters.network.http_connection_manager\r\n
+    \       typed_config:\r\n          \"@type\": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager\r\n
+    \         stat_prefix: ingress_http\r\n          codec_type: AUTO\r\n          route_config:\r\n
+    \           name: eshop_backend_route\r\n            virtual_hosts:\r\n            -
+    name: eshop_backend\r\n              domains:\r\n              - [\"*\"]\r\n              routes:\r\n
+    \             - name: \"c-short\"\r\n                match:\r\n                  prefix:
+    \"/c/\"\r\n                route:\r\n                  auto_host_rewrite: true\r\n
+    \                 prefix_rewrite: \"/catalog-api/\"\r\n                  cluster:
+    catalog\r\n              - name: \"c-long\"\r\n                match:\r\n                  prefix:
+    \"/catalog-api/\"\r\n                route:\r\n                  auto_host_rewrite:
+    true\r\n                  cluster: catalog\r\n              - name: \"o-short\"\r\n
+    \               match:\r\n                  prefix: \"/o/\"\r\n                route:\r\n
+    \                 auto_host_rewrite: true\r\n                  prefix_rewrite: \"/ordering-api/\"\r\n
+    \                 cluster: ordering\r\n              - name: \"o-long\"\r\n                match:\r\n
+    \                 prefix: \"/ordering-api/\"\r\n                route:\r\n                  auto_host_rewrite:
+    true\r\n                  cluster: ordering\r\n              - name: \"h-long\"\r\n
+    \               match:\r\n                  prefix: \"/hub/notificationhub\"\r\n
+    \               route:\r\n                  auto_host_rewrite: true\r\n                  cluster:
+    signalr-hub\r\n                  timeout: 300s\r\n                  upgrade_configs:\r\n
+    \                   upgrade_type: \"websocket\"\r\n                    enabled:
+    true\r\n              - name: \"b-short\"\r\n                match:\r\n                  prefix:
+    \"/b/\"\r\n                route:\r\n                  auto_host_rewrite: true\r\n
+    \                 prefix_rewrite: \"/basket-api/\"\r\n                  cluster:
+    basket\r\n              - name: \"b-long\"\r\n                match:\r\n                  prefix:
+    \"/basket-api/\"\r\n                route:\r\n                  auto_host_rewrite:
+    true\r\n                  cluster: basket\r\n              - name: \"agg\"\r\n                match:\r\n
+    \                 prefix: \"/\"\r\n                route:\r\n                  auto_host_rewrite:
+    true\r\n                  prefix_rewrite: \"/\"\r\n                  cluster: shoppingagg\r\n
+    \         http_filters:\r\n          - name: envoy.filters.http.router\r\n  clusters:\r\n
+    \ - name: shoppingagg\r\n    connect_timeout: 0.25s\r\n    type: strict_dns\r\n
+    \   lb_policy: round_robin\r\n    load_assignment:\r\n      cluster_name: shoppingagg\r\n
+    \     endpoints:\r\n      - lb_endpoints:\r\n        - endpoint:\r\n            address:\r\n
+    \             socket_address:\r\n                address: webshoppingagg\r\n                port_value:
+    80\r\n  - name: catalog\r\n    connect_timeout: 0.25s\r\n    type: strict_dns\r\n
+    \   lb_policy: round_robin\r\n    load_assignment:\r\n      cluster_name: catalog\r\n
+    \     endpoints:\r\n      - lb_endpoints:\r\n        - endpoint:\r\n            address:\r\n
+    \             socket_address:\r\n                address: catalog-api\r\n                port_value:
+    80\r\n  - name: basket\r\n    connect_timeout: 0.25s\r\n    type: strict_dns\r\n
+    \   lb_policy: round_robin\r\n    load_assignment:\r\n      cluster_name: basket\r\n
+    \     endpoints:\r\n      - lb_endpoints:\r\n        - endpoint:\r\n            address:\r\n
+    \             socket_address:\r\n                address: basket-api\r\n                port_value:
+    80\r\n  - name: ordering\r\n    connect_timeout: 0.25s\r\n    type: strict_dns\r\n
+    \   lb_policy: round_robin\r\n    load_assignment:\r\n      cluster_name: ordering\r\n
+    \     endpoints:\r\n      - lb_endpoints:\r\n        - endpoint:\r\n            address:\r\n
+    \             socket_address:\r\n                address: ordering-api\r\n                port_value:
+    80\r\n  - name: signalr-hub\r\n    connect_timeout: 0.25s\r\n    type: strict_dns\r\n
+    \   lb_policy: round_robin\r\n    load_assignment:\r\n      cluster_name: signalr-hub\r\n
+    \     endpoints:\r\n      - lb_endpoints:\r\n        - endpoint:\r\n            address:\r\n
+    \             socket_address:\r\n                address: ordering-signalrhub\r\n
+    \               port_value: 80"
+---
+# Source: apigwws/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: webshoppingapigw
+  labels:
+    app: apigwws
+    chart: apigwws-0.1.0
+    release: mychart
+    heritage: Helm
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: http
+      protocol: TCP
+      name: http
+    - port: 8001
+      targetPort: admin
+      protocol: TCP
+      name: admin
+  selector:
+    app: apigwws
+    release: mychart
+---
+# Source: apigwws/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mychart-apigwws
+  labels:
+    app: apigwws
+    chart: apigwws-0.1.0
+    release: mychart
+    heritage: Helm
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: apigwws
+      release: mychart
+  template:
+    metadata:
+      labels:
+        app: apigwws
+        release: mychart
+                 
+    spec:
+      securityContext:
+          runAsUser: 2000
+          runAsGroup: 3000
+          fsGroup: 2000    
+      
+      volumes:
+      - name: config
+        configMap:
+          name: envoy-mychart-apigwws
+          items:
+          - key: envoy.yaml
+            path: envoy.yaml
+      containers:
+        - name: apigwws
+          livenessProbe:
+            httpGet:
+              port: 8001
+              path: /ready
+            initialDelaySeconds: 5
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              port: 8001
+              path: /ready
+            initialDelaySeconds: 5
+            periodSeconds: 60
+            timeoutSeconds:         
+          image: "envoyproxy/envoy:v1.21.0"
+          imagePullPolicy: 
+          volumeMounts:
+          - name: config
+            mountPath: /etc/envoy      
+          env:
+            - name: PATH_BASE
+              value: /webshoppingapigw
+            - name: k8sname
+              value: eshop-aks
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+            - name: admin
+              containerPort: 8001
+              protocol: TCP
+          resources:
+            {}
+---
+# Source: apigwws/templates/ingress.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: mychart-apigwws
+  labels:
+    app: apigwws
+    chart: apigwws-0.1.0
+    release: mychart
+    heritage: Helm
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/use-regex: "true"
+spec:
+  rules:

@@ -1,0 +1,109 @@
+---
+# Source: payment-api/templates/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "cfg-mychart-payment-api"
+  labels:
+    app: payment-api
+    chart: payment-api-0.1.0
+    release: mychart
+    heritage: Helm
+data:
+  all__EventBusConnection: rabbitmq
+  all__InstrumentationKey: ""
+  all__UseAzureServiceBus: "false"
+---
+# Source: payment-api/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: payment-api
+  labels:
+    app: payment-api
+    chart: payment-api-0.1.0
+    release: mychart
+    heritage: Helm
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app: payment-api
+    release: mychart
+---
+# Source: payment-api/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mychart-payment-api
+  labels:
+    ufo: cfg-mychart-payment-api
+    app: payment-api
+    chart: payment-api-0.1.0
+    release: mychart
+    heritage: Helm
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: payment-api
+      release: mychart
+  template:
+    metadata:
+      labels:
+        app: payment-api
+        release: mychart
+                   
+    spec:
+      
+      containers:
+        - name: payment-api
+          livenessProbe:
+            httpGet:
+              port: 80
+              path: /liveness
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              port: 80
+              path: /hc
+            initialDelaySeconds: 90
+            periodSeconds: 60
+            timeoutSeconds: 5                
+          image: "eshop/payment.api:latest"
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: PATH_BASE
+              value: /payment-api
+            - name: k8sname
+              value: eshop-aks
+            - name: ASPNETCORE_ENVIRONMENT
+              value: "Development"
+            - name: OrchestratorType
+              value: "K8S"
+            - name: ApplicationInsights__InstrumentationKey
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-payment-api
+                  key: all__InstrumentationKey
+            - name: EventBusConnection
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-payment-api
+                  key: all__EventBusConnection
+            - name: AzureServiceBusEnabled
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-payment-api
+                  key: all__UseAzureServiceBus
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+          resources:
+            {}

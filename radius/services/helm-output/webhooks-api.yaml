@@ -1,0 +1,137 @@
+---
+# Source: webhooks-api/templates/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "cfg-mychart-webhooks-api"
+  labels:
+    app: webhooks-api
+    chart: webhooks-api-0.1.0
+    release: mychart
+    heritage: Helm
+data:
+  webhooks__ConnectionString: Server=sql-data;Initial Catalog=WebhooksDb;User Id=sa;Password=Pass@word;TrustServerCertificate=true;
+  urls__IdentityUrl: http:///identity
+  urls__IdentityUrlExternal: http:///identity
+  all__EventBusConnection: rabbitmq
+  all__InstrumentationKey: ""
+  all__UseAzureServiceBus: "false"
+---
+# Source: webhooks-api/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: webhooks-api
+  labels:
+    app: webhooks-api
+    chart: webhooks-api-0.1.0
+    release: mychart
+    heritage: Helm
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app: webhooks-api
+    release: mychart
+---
+# Source: webhooks-api/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mychart-webhooks-api
+  labels:
+    ufo: cfg-mychart-webhooks-api
+    app: webhooks-api
+    chart: webhooks-api-0.1.0
+    release: mychart
+    heritage: Helm
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: webhooks-api
+      release: mychart
+  template:
+    metadata:
+      labels:
+        app: webhooks-api
+        release: mychart
+                   
+    spec:
+      
+      containers:
+        - name: webhooks-api
+          image: "eshop/webhooks.api:latest"
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: PATH_BASE
+              value: /webhooks-api
+            - name: k8sname
+              value: eshop-aks
+            - name: ASPNETCORE_ENVIRONMENT
+              value: "Development"
+            - name: OrchestratorType
+              value: "K8S"
+            - name: ConnectionString
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-webhooks-api
+                  key: webhooks__ConnectionString
+            - name: ApplicationInsights__InstrumentationKey
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-webhooks-api
+                  key: all__InstrumentationKey
+            - name: EventBusConnection
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-webhooks-api
+                  key: all__EventBusConnection
+            - name: AzureServiceBusEnabled
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-webhooks-api
+                  key: all__UseAzureServiceBus
+            - name: IdentityUrl
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-webhooks-api
+                  key: urls__IdentityUrl
+            - name: IdentityUrlExternal
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-webhooks-api
+                  key: urls__IdentityUrlExternal
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+          resources:
+            {}
+---
+# Source: webhooks-api/templates/ingress.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: mychart-webhooks-api
+  labels:
+    app: webhooks-api
+    chart: webhooks-api-0.1.0
+    release: mychart
+    heritage: Helm
+spec:
+  rules:
+    - host: chart-example.local
+      http:
+        paths:
+          - path: /webhooks-api
+            pathType: Prefix
+            backend:
+              service:
+                name: webhooks-api
+                port:
+                  number: 80

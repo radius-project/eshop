@@ -1,0 +1,141 @@
+---
+# Source: webmvc/templates/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "cfg-mychart-webmvc"
+  labels:
+    app: webmvc
+    chart: webmvc-0.1.0
+    release: mychart
+    heritage: Helm
+data:
+  all__InstrumentationKey: ""
+  all__UseAzureServiceBus: "false"
+  webmvc__keystore: keystore-data
+  internalurls__apigwws: http://webshoppingapigw
+  internalurls__identity__hc: http://identity-api/hc
+  urls__apigwws: http:///webshoppingapigw
+  urls__mvc: http:///webmvc
+  urls__IdentityUrl: http:///identity
+---
+# Source: webmvc/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: webmvc
+  labels:
+    app: webmvc
+    chart: webmvc-0.1.0
+    release: mychart
+    heritage: Helm
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app: webmvc
+    release: mychart
+---
+# Source: webmvc/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mychart-webmvc
+  labels:
+    ufo: cfg-mychart-webmvc
+    app: webmvc
+    chart: webmvc-0.1.0
+    release: mychart
+    heritage: Helm
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: webmvc
+      release: mychart
+  template:
+    metadata:
+      labels:
+        app: webmvc
+        release: mychart
+                   
+    spec:
+      
+      containers:
+        - name: webmvc
+          image: "eshop/webmvc:latest"
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: PATH_BASE
+              value: /webmvc
+            - name: k8sname
+              value: eshop-aks
+            - name: ASPNETCORE_ENVIRONMENT
+              value: "Development"
+            - name: OrchestratorType
+              value: "K8S"
+            - name: IsClusterEnv
+              value: "True"
+            - name: ApplicationInsights__InstrumentationKey
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-webmvc
+                  key: all__InstrumentationKey
+            - name: DPConnectionString
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-webmvc
+                  key: webmvc__keystore
+            - name: PurchaseUrl
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-webmvc
+                  key: internalurls__apigwws
+            - name: ExternalPurchaseUrl
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-webmvc
+                  key: urls__apigwws
+            - name: CallBackUrl
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-webmvc
+                  key: urls__mvc
+            - name: IdentityUrl
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-webmvc
+                  key: urls__IdentityUrl
+            - name: IdentityUrlHC
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-webmvc
+                  key: internalurls__identity__hc
+            - name: SignalrHubUrl
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-webmvc
+                  key: urls__apigwws
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+          resources:
+            {}
+---
+# Source: webmvc/templates/ingress.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: mychart-webmvc
+  labels:
+    app: webmvc
+    chart: webmvc-0.1.0
+    release: mychart
+    heritage: Helm
+spec:
+  rules:

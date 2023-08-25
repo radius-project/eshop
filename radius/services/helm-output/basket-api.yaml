@@ -1,0 +1,130 @@
+---
+# Source: basket-api/templates/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "cfg-mychart-basket-api"
+  labels:
+    app: basket-api
+    chart: basket-api-0.1.0
+    release: mychart
+    heritage: Helm
+data:
+  basket__ConnectionString: basket-data
+  urls__IdentityUrl: http://identity-api
+  all__EventBusConnection: rabbitmq
+  all__InstrumentationKey: ""
+  all__UseAzureServiceBus: "false"
+---
+# Source: basket-api/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: basket-api
+  labels:
+    app: basket-api
+    chart: basket-api-0.1.0
+    release: mychart
+    heritage: Helm
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: http
+      protocol: TCP
+      name: http
+    - port: 81
+      targetPort: grpc
+      protocol: TCP
+      name: grpc
+  selector:
+    app: basket-api
+    release: mychart
+---
+# Source: basket-api/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mychart-basket-api
+  labels:
+    ufo: cfg-mychart-basket-api
+    app: basket-api
+    chart: basket-api-0.1.0
+    release: mychart
+    heritage: Helm
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: basket-api
+      release: mychart
+  template:
+    metadata:
+      labels:
+        app: basket-api
+        release: mychart
+              
+    spec:
+      
+      containers:
+        - name: basket-api
+          livenessProbe:
+            httpGet: 
+              port: 80
+              path: /liveness
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              port: 80
+              path: /hc
+            initialDelaySeconds: 90
+            periodSeconds: 60
+            timeoutSeconds: 5        
+          image: "eshop/basket.api:latest"
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: PATH_BASE
+              value: /basket-api
+            - name: k8sname
+              value: eshop-aks
+            - name: OrchestratorType
+              value: "K8S"
+            - name: PORT
+              value: "80"
+            - name: GRPC_PORT
+              value: "81"
+            - name: ConnectionString
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-basket-api
+                  key: basket__ConnectionString
+            - name: EventBusConnection
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-basket-api
+                  key: all__EventBusConnection
+            - name: ApplicationInsights__InstrumentationKey
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-basket-api
+                  key: all__InstrumentationKey
+            - name: AzureServiceBusEnabled
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-basket-api
+                  key: all__UseAzureServiceBus
+            - name: IdentityUrl
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-basket-api
+                  key: urls__IdentityUrl
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+            - name: grpc
+              containerPort: 81
+              protocol: TCP                
+          resources:
+            {}
