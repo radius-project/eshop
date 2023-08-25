@@ -10,6 +10,9 @@ metadata:
     chart: {{ template "ordering-backgroundtasks.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
+  annotations:
+    radius.app/application: {{ .Values.app.name }}
+    radius.app/name: {{ .Values.app.svc.orderingbackgroundtasks }}
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:

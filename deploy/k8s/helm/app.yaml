@@ -36,3 +36,10 @@ app:                                                    # app global settings
       payment: payment-api                              # service name for payment api
       webhooks: webhooks-api                            # service name for webhooks api
       webhooksweb: webhooks-client                      # service name for webhooks web
+  infra:
+      basketdata: basket-data                           # infra name for basket data
+      keystoredata: keystore-data                       # infra name for keystore data
+      nosqldata: nosql-data                             # infra name for nosql data
+      rabbitmq: rabbitmq                                # infra name for rabbitmq
+      sqldata: sql-data                                 # infra name for sql data
+      

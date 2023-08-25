@@ -10,6 +10,17 @@ metadata:
     chart: {{ template "webstatus.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
+  annotations:
+    radius.app/application: {{ .Values.app.name }}
+    radius.app/name: {{ .Values.app.svc.status }}
+    radius.app/connection-identity: {{ .Values.app.svc.identity }}
+    radius.app/connection-basket: {{ .Values.app.svc.basket }}
+    radius.app/connection-catalog: {{ .Values.app.svc.catalog }}
+    radius.app/connection-payment: {{ .Values.app.svc.payment }}
+    radius.app/connection-ordering: {{ .Values.app.svc.ordering }}
+    radius.app/connection-orderingsignalrhub: {{ .Values.app.svc.orderingsignalrhub }}
+    radius.app/connection-orderingbackgroundtasks: {{ .Values.app.svc.orderingbackgroundtasks }}
+    radius.app/connection-webshoppingagg: {{ .Values.app.svc.webshoppingagg }}
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:

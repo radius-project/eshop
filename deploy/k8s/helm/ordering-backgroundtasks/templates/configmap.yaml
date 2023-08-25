@@ -11,6 +11,9 @@ metadata:
     chart: {{ template "ordering-backgroundtasks.chart" .}}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
+  annotations:
+    radius.app/application: {{ .Values.app.name }}
+    radius.app/name: {{ .Values.app.svc.orderingbackgroundtasks }}
 data:
   ordering__ConnectionString: Server={{ $sqlsrv }};Initial Catalog={{ .Values.inf.sql.ordering.db }};User Id={{ .Values.inf.sql.common.user }};Password={{ .Values.inf.sql.common.pwd }};TrustServerCertificate={{ .Values.inf.sql.common.TrustServerCertificate }};
   ordering__EnableLoadTest: "{{ .Values.inf.misc.useLoadTest }}"
