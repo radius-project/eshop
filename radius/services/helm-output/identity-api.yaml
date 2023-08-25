@@ -1,0 +1,194 @@
+---
+# Source: identity-api/templates/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "cfg-mychart-identity-api"
+  labels:
+    app: identity-api
+    chart: identity-api-0.1.0
+    release: mychart
+    heritage: Helm
+data:
+  identity__ConnectionString: Server=sql-data;Initial Catalog=IdentityDb;User Id=sa;Password=Pass@word;TrustServerCertificate=true;
+  identity__keystore: keystore-data
+  all__InstrumentationKey: ""
+  mvc_e: http:///webmvc
+  spa_e: http://
+  basket_e: http:///basket-api
+  ordering_e: http:///ordering-api
+  mobileshoppingagg_e: http:///mobileshoppingagg
+  webshoppingagg_e: http:///webshoppingagg
+  xamarin_callback_e: http:///xamarincallback
+  webhooksapi_e:  http:///webhooks-api
+  webhooksweb_e: http:///webhooks-web
+  enableDevspaces: "false"
+---
+# Source: identity-api/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: identity-api
+  labels:
+    app: identity-api
+    chart: identity-api-0.1.0
+    release: mychart
+    heritage: Helm
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app: identity-api
+    release: mychart
+---
+# Source: identity-api/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mychart-identity-api
+  labels:
+    ufo: cfg-mychart-identity-api
+    app: identity-api
+    chart: identity-api-0.1.0
+    release: mychart
+    heritage: Helm
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: identity-api
+      release: mychart
+  template:
+    metadata:
+      labels:
+        app: identity-api
+        release: mychart
+                   
+    spec:
+      
+      containers:
+        - name: identity-api
+          livenessProbe:
+            httpGet:
+              port: 80
+              path: /liveness
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              port: 80
+              path: /hc
+            initialDelaySeconds: 90
+            periodSeconds: 60
+            timeoutSeconds: 5           
+          image: "eshop/identity.api:latest"
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: PATH_BASE
+              value: /identity
+            - name: k8sname
+              value: eshop-aks
+            - name: ASPNETCORE_ENVIRONMENT
+              value: "Development"
+            - name: OrchestratorType
+              value: "K8S"
+            - name: IsClusterEnv
+              value: "True"
+            - name: ConnectionString
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-identity-api
+                  key: identity__ConnectionString
+            - name: DPConnectionString
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-identity-api
+                  key: identity__keystore
+            - name: ApplicationInsights__InstrumentationKey
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-identity-api
+                  key: all__InstrumentationKey
+            - name: MvcClient
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-identity-api
+                  key: mvc_e
+            - name: SpaClient
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-identity-api
+                  key: spa_e
+            - name: BasketApiClient
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-identity-api
+                  key: basket_e
+            - name: OrderingApiClient
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-identity-api
+                  key: ordering_e
+            - name: MobileShoppingAggClient
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-identity-api
+                  key: mobileshoppingagg_e
+            - name: WebShoppingAggClient
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-identity-api
+                  key: webshoppingagg_e
+            - name: XamarinCallback
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-identity-api
+                  key: xamarin_callback_e
+            - name: WebhooksApiClient
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-identity-api
+                  key: webhooksapi_e
+            - name: WebhooksWebClient
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-identity-api
+                  key: webhooksweb_e
+            - name: EnableDevspaces
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-identity-api
+                  key: enableDevspaces
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+          resources:
+            {}
+---
+# Source: identity-api/templates/ingress.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: mychart-identity-api
+  labels:
+    app: identity-api
+    chart: identity-api-0.1.0
+    release: mychart
+    heritage: Helm
+spec:
+  rules:
+    - host: chart-example.local
+      http:
+        paths:
+          - path: /identity
+            pathType: Prefix
+            backend:
+              service:
+                name: identity-api
+                port:
+                  number: 80

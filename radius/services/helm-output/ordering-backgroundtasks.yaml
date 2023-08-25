@@ -1,0 +1,126 @@
+---
+# Source: ordering-backgroundtasks/templates/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "cfg-mychart-ordering-backgroundtasks"
+  labels:
+    app: ordering-backgroundtasks
+    chart: ordering-backgroundtasks-0.1.0
+    release: mychart
+    heritage: Helm
+data:
+  ordering__ConnectionString: Server=sql-data;Initial Catalog=OrderingDb;User Id=sa;Password=Pass@word;TrustServerCertificate=true;
+  ordering__EnableLoadTest: ""
+  all__EventBusConnection: rabbitmq
+  all__InstrumentationKey: ""
+  all__UseAzureServiceBus: "false"
+  graceperiodmanager__CheckUpdateTime: "15000"
+  graceperiodmanager__GracePeriodTime: "1"
+---
+# Source: ordering-backgroundtasks/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: ordering-backgroundtasks
+  labels:
+    app: ordering-backgroundtasks
+    chart: ordering-backgroundtasks-0.1.0
+    release: mychart
+    heritage: Helm
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app: ordering-backgroundtasks
+    release: mychart
+---
+# Source: ordering-backgroundtasks/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mychart-ordering-backgroundtasks
+  labels:
+    app: ordering-backgroundtasks
+    chart: ordering-backgroundtasks-0.1.0
+    release: mychart
+    heritage: Helm
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ordering-backgroundtasks
+      release: mychart
+  template:
+    metadata:
+      labels:
+        app: ordering-backgroundtasks
+        release: mychart
+    spec:
+      
+      containers:
+        - name: ordering-backgroundtasks
+          livenessProbe:
+            httpGet:
+              port: 80
+              path: /liveness
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              port: 80
+              path: /hc
+            initialDelaySeconds: 90
+            periodSeconds: 60
+            timeoutSeconds: 5            
+          image: "eshop/ordering.backgroundtasks:latest"
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: PATH_BASE
+              value: /ordering-backgroundtasks
+            - name: k8sname
+              value: eshop-aks
+            - name: ASPNETCORE_ENVIRONMENT
+              value: "Development"
+            - name: OrchestratorType
+              value: "K8S"
+            - name: ConnectionString
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-ordering-backgroundtasks
+                  key: ordering__ConnectionString
+            - name: ApplicationInsights__InstrumentationKey
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-ordering-backgroundtasks
+                  key: all__InstrumentationKey
+            - name: EventBusConnection
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-ordering-backgroundtasks
+                  key: all__EventBusConnection
+            - name: AzureServiceBusEnabled
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-ordering-backgroundtasks
+                  key: all__UseAzureServiceBus
+            - name: CheckUpdateTime
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-ordering-backgroundtasks
+                  key: graceperiodmanager__CheckUpdateTime
+            - name: GracePeriodTime
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-ordering-backgroundtasks
+                  key: graceperiodmanager__GracePeriodTime
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+          resources:
+            {}

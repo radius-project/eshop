@@ -1,0 +1,127 @@
+---
+# Source: webhooks-web/templates/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "cfg-mychart-webhooks-web"
+  labels:
+    app: webhooks-web
+    chart: webhooks-web-0.1.0
+    release: mychart
+    heritage: Helm
+data:
+  urls__webhooks: http:///webhooks-api
+  identity_e: http:///identity
+  webhooksweb_e: http:///webhooks-web
+  urls_webhooksweb: http://webhooks-client
+---
+# Source: webhooks-web/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: webhooks-client
+  labels:
+    app: webhooks-web
+    chart: webhooks-web-0.1.0
+    release: mychart
+    heritage: Helm
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app: webhooks-web
+    release: mychart
+---
+# Source: webhooks-web/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mychart-webhooks-web
+  labels:
+    ufo: cfg-mychart-webhooks-web
+    app: webhooks-web
+    chart: webhooks-web-0.1.0
+    release: mychart
+    heritage: Helm
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: webhooks-web
+      release: mychart
+  template:
+    metadata:
+      labels:
+        app: webhooks-web
+        release: mychart
+                   
+    spec:
+      
+      containers:
+        - name: webhooks-web
+          image: "eshop/webhooks.client:latest"
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: PATH_BASE
+              value: /webhooks-web
+            - name: k8sname
+              value: eshop-aks
+            - name: ASPNETCORE_ENVIRONMENT
+              value: "Production"
+            - name: OrchestratorType
+              value: "K8S"
+            - name: Token
+              value: "WebHooks-Demo-Web"
+            - name: WebhooksUrl
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-webhooks-web
+                  key: urls__webhooks
+            - name: IdentityUrl
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-webhooks-web
+                  key: identity_e
+            - name: CallbackUrl
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-webhooks-web
+                  key: webhooksweb_e
+            - name: SelfUrl
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-webhooks-web
+                  key: webhooksweb_e
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+          resources:
+            {}
+---
+# Source: webhooks-web/templates/ingress.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: mychart-webhooks-web
+  labels:
+    app: webhooks-web
+    chart: webhooks-web-0.1.0
+    release: mychart
+    heritage: Helm
+spec:
+  rules:
+    - host: chart-example.local
+      http:
+        paths:
+          - path: /webhooks-web
+            pathType: Prefix         
+            backend:
+              service:
+                name: webhooks-client
+                port:
+                  number: 80

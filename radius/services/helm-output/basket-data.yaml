@@ -1,0 +1,54 @@
+---
+# Source: basket-data/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: basket-data
+  labels:
+    app: basket-data
+    chart: basket-data-0.1.0
+    release: mychart
+    heritage: Helm
+spec:
+  type: ClusterIP
+  ports:
+    - port: 6379
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app: basket-data
+    release: mychart
+---
+# Source: basket-data/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mychart-basket-data
+  labels:
+    app: basket-data
+    chart: basket-data-0.1.0
+    release: mychart
+    heritage: Helm
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: basket-data
+      release: mychart
+  template:
+    metadata:
+      labels:
+        app: basket-data
+        release: mychart
+    spec:
+      containers:
+        - name: basket-data
+          image: "redis:4.0.10"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 6379
+              protocol: TCP
+          resources:
+            {}

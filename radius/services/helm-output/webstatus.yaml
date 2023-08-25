@@ -1,0 +1,235 @@
+---
+# Source: webstatus/templates/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "cfg-mychart-webstatus"
+  labels:
+    app: webstatus
+    chart: webstatus-0.1.0
+    release: mychart
+    heritage: Helm
+data:
+  all__InstrumentationKey: ""
+  all__UseAzureServiceBus: "false"
+  webstatus__keystore: keystore-data
+  name__mvc__hc: WebMVC HTTP Check
+  internalurls__mvc__hc: http://webmvc/hc
+  name__spa__hc: WebSPA HTTP Check
+  internalurls__spa__hc: http://webspa/hc
+  name__apigwws__hc: Web Shopping API GW HTTP Check
+  internalurls__apigwws__hc: http://webshoppingapigw:8001/ready
+  name__apigwms__hc: Mobile Shopping API GW HTTP Check
+  internalurls__apigwms__hc: http://mobileshoppingapigw:8001/ready
+  name__apigwwsagg__hc: Web Shopping Aggregator GW HTTP Check
+  internalurls__apigwwsagg__hc: http://webshoppingagg/hc
+  name__apigwmsagg__hc: Mobile Shopping Aggregator HTTP Check
+  internalurls__apigwmsagg__hc: http://mobileshoppingagg/hc
+  name__ordering__hc: Ordering HTTP Check
+  internalurls__ordering__hc: http://ordering-api/hc
+  name__orderingbackground__hc: Ordering HTTP Background Check
+  internalurls__orderingbackground__hc: http://ordering-backgroundtasks/hc
+  name__basket__hc: Basket HTTP Check
+  internalurls__basket__hc: http://basket-api/hc
+  name__catalog__hc: Catalog HTTP Check
+  internalurls__catalog__hc: http://catalog-api/hc
+  name__identity__hc: Identity HTTP Check
+  internalurls__identity__hc: http://identity-api/hc
+  name__payment__hc: Payment HTTP Check
+  internalurls__payment__hc: http://payment-api/hc
+  name__signalrhub__hc: Ordering SignalR Hub HTTP Check
+  internalurls__signalrhub__hc: http://ordering-signalrhub/hc
+---
+# Source: webstatus/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: webstatus
+  labels:
+    app: webstatus
+    chart: webstatus-0.1.0
+    release: mychart
+    heritage: Helm
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app: webstatus
+    release: mychart
+---
+# Source: webstatus/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mychart-webstatus
+  labels:
+    ufo: cfg-mychart-webstatus
+    app: webstatus
+    chart: webstatus-0.1.0
+    release: mychart
+    heritage: Helm
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: webstatus
+      release: mychart
+  template:
+    metadata:
+      labels:
+        app: webstatus
+        release: mychart
+                   
+    spec:
+      
+      containers:
+        - name: webstatus
+          image: "eshop/webstatus:latest"
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: PATH_BASE
+              value: /webstatus
+            - name: k8sname
+              value: eshop-aks
+            - name: ASPNETCORE_ENVIRONMENT
+              value: "Development"
+            - name: OrchestratorType
+              value: "K8S"
+            - name: ApplicationInsights__InstrumentationKey
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-webstatus
+                  key: all__InstrumentationKey
+            - name: HealthChecks-UI__HealthChecks__0__Name
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-webstatus
+                  key: name__mvc__hc
+            - name: HealthChecks-UI__HealthChecks__0__Uri
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-webstatus
+                  key: internalurls__mvc__hc
+            - name: HealthChecks-UI__HealthChecks__1__Name
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-webstatus
+                  key: name__spa__hc
+            - name: HealthChecks-UI__HealthChecks__1__Uri
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-webstatus
+                  key: internalurls__spa__hc
+            - name: HealthChecks-UI__HealthChecks__2__Name
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-webstatus
+                  key: name__apigwwsagg__hc
+            - name: HealthChecks-UI__HealthChecks__2__Uri
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-webstatus
+                  key: internalurls__apigwwsagg__hc
+            - name: HealthChecks-UI__HealthChecks__3__Name
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-webstatus
+                  key: name__apigwmsagg__hc
+            - name: HealthChecks-UI__HealthChecks__3__Uri
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-webstatus
+                  key: internalurls__apigwmsagg__hc
+            - name: HealthChecks-UI__HealthChecks__4__Name
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-webstatus
+                  key: name__ordering__hc
+            - name: HealthChecks-UI__HealthChecks__4__Uri
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-webstatus
+                  key: internalurls__ordering__hc
+            - name: HealthChecks-UI__HealthChecks__5__Name
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-webstatus
+                  key: name__basket__hc
+            - name: HealthChecks-UI__HealthChecks__5__Uri
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-webstatus
+                  key: internalurls__basket__hc
+            - name: HealthChecks-UI__HealthChecks__6__Name
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-webstatus
+                  key: name__catalog__hc
+            - name: HealthChecks-UI__HealthChecks__6__Uri
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-webstatus
+                  key: internalurls__catalog__hc
+            - name: HealthChecks-UI__HealthChecks__7__Name
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-webstatus
+                  key: name__identity__hc
+            - name: HealthChecks-UI__HealthChecks__7__Uri
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-webstatus
+                  key: internalurls__identity__hc
+            - name: HealthChecks-UI__HealthChecks__8__Name
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-webstatus
+                  key: name__payment__hc
+            - name: HealthChecks-UI__HealthChecks__8__Uri
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-webstatus
+                  key: internalurls__payment__hc
+            - name: HealthChecks-UI__HealthChecks__9__Name
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-webstatus
+                  key: name__signalrhub__hc
+            - name: HealthChecks-UI__HealthChecks__9__Uri
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-webstatus
+                  key: internalurls__signalrhub__hc
+            - name: HealthChecks-UI__HealthChecks__10__Name
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-webstatus
+                  key: name__orderingbackground__hc
+            - name: HealthChecks-UI__HealthChecks__10__Uri
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-webstatus
+                  key: internalurls__orderingbackground__hc
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+          resources:
+            {}
+---
+# Source: webstatus/templates/ingress.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: mychart-webstatus
+  labels:
+    app: webstatus
+    chart: webstatus-0.1.0
+    release: mychart
+    heritage: Helm
+spec:
+  rules:

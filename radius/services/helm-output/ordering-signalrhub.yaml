@@ -1,0 +1,108 @@
+---
+# Source: ordering-signalrhub/templates/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "cfg-mychart-ordering-signalrhub"
+  labels:
+    app: ordering-signalrhub
+    chart: ordering-signalrhub-0.1.0
+    release: mychart
+    heritage: Helm
+data:
+  all__EventBusConnection: rabbitmq
+  all__InstrumentationKey: ""
+  all__UseAzureServiceBus: "false"
+  signalr__StoreConnectionString: keystore-data
+  urls__IdentityUrl: http://identity-api
+---
+# Source: ordering-signalrhub/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: ordering-signalrhub
+  labels:
+    app: ordering-signalrhub
+    chart: ordering-signalrhub-0.1.0
+    release: mychart
+    heritage: Helm
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app: ordering-signalrhub
+    release: mychart
+---
+# Source: ordering-signalrhub/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mychart-ordering-signalrhub
+  labels:
+    app: ordering-signalrhub
+    chart: ordering-signalrhub-0.1.0
+    release: mychart
+    heritage: Helm
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ordering-signalrhub
+      release: mychart
+  template:
+    metadata:
+      labels:
+        app: ordering-signalrhub
+        release: mychart
+    spec:
+      
+      containers:
+        - name: ordering-signalrhub
+          image: "eshop/ordering.signalrhub:latest"
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: PATH_BASE
+              value: /ordering-signalrhub
+            - name: k8sname
+              value: eshop-aks
+            - name: ASPNETCORE_ENVIRONMENT
+              value: "Development"
+            - name: OrchestratorType
+              value: "K8S"
+            - name: IsClusterEnv
+              value: 
+            - name: ApplicationInsights__InstrumentationKey
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-ordering-signalrhub
+                  key: all__InstrumentationKey
+            - name: EventBusConnection
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-ordering-signalrhub
+                  key: all__EventBusConnection
+            - name: AzureServiceBusEnabled
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-ordering-signalrhub
+                  key: all__UseAzureServiceBus
+            - name: IdentityUrl
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-ordering-signalrhub
+                  key: urls__IdentityUrl
+            - name: SignalrStoreConnectionString
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-ordering-signalrhub
+                  key: signalr__StoreConnectionString
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+          resources:
+            {}

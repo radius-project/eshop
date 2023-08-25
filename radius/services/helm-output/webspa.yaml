@@ -1,0 +1,137 @@
+---
+# Source: webspa/templates/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "cfg-mychart-webspa"
+  labels:
+    app: webspa
+    chart: webspa-0.1.0
+    release: mychart
+    heritage: Helm
+data:
+  all__InstrumentationKey: ""
+  webspa__keystore: keystore-data
+  internalurls__apigwws: http://webshoppingapigw
+  internalurls__identity__hc: http://identity-api/hc
+  urls__apigwws: http:///webshoppingapigw
+  urls__spa: http://
+  urls__IdentityUrl: http:///identity
+---
+# Source: webspa/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: webspa
+  labels:
+    app: webspa
+    chart: webspa-0.1.0
+    release: mychart
+    heritage: Helm
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app: webspa
+    release: mychart
+---
+# Source: webspa/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mychart-webspa
+  labels:
+    ufo: cfg-mychart-webspa
+    app: webspa
+    chart: webspa-0.1.0
+    release: mychart
+    heritage: Helm
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: webspa
+      release: mychart
+  template:
+    metadata:
+      labels:
+        app: webspa
+        release: mychart
+                
+    spec:
+      
+      containers:
+        - name: webspa
+          image: "eshop/webspa:latest"
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: PATH_BASE
+              value: /
+            - name: k8sname
+              value: eshop-aks
+            - name: ASPNETCORE_ENVIRONMENT
+              value: "Development"
+            - name: ASPNETCORE_URLS
+              value: "http://0.0.0.0:80"
+            - name: OrchestratorType
+              value: "K8S"
+            - name: IsClusterEnv
+              value: "True"
+            - name: ApplicationInsights__InstrumentationKey
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-webspa
+                  key: all__InstrumentationKey
+            - name: DPConnectionString
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-webspa
+                  key: webspa__keystore
+            - name: PurchaseUrl
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-webspa
+                  key: urls__apigwws
+            - name: CallBackUrl
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-webspa
+                  key: urls__spa
+            - name: IdentityUrl
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-webspa
+                  key: urls__IdentityUrl
+            - name: IdentityUrlHC
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-webspa
+                  key: internalurls__identity__hc
+            - name: SignalrHubUrl
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg-mychart-webspa
+                  key: urls__apigwws
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+          resources:
+            {}
+---
+# Source: webspa/templates/ingress.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: mychart-webspa
+  labels:
+    app: webspa
+    chart: webspa-0.1.0
+    release: mychart
+    heritage: Helm
+spec:
+  rules:
