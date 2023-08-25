@@ -20,7 +20,9 @@ resource webhooks 'Applications.Core/containers@2022-03-15-privatepreview' = {
   properties: {
     application: application
     runtimes: {
-      base: loadTextContent('helm-output/webhooks-api.yaml')
+      kubernetes: {
+        base: loadTextContent('helm-output/webhooks-api.yaml')
+      }
     }
     container: {
       env: {

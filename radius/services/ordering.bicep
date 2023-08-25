@@ -23,7 +23,9 @@ resource ordering 'Applications.Core/containers@2022-03-15-privatepreview' = {
   properties: {
     application: application
     runtimes: {
-      base: loadTextContent('helm-output/ordering-api.yaml')
+      kubernetes: {
+        base: loadTextContent('helm-output/ordering-api.yaml')
+      }
     }
     container: {
       env: {
@@ -46,7 +48,9 @@ resource orderbgtasks 'Applications.Core/containers@2022-03-15-privatepreview' =
   properties: {
     application: application
     runtimes: {
-      base: loadTextContent('helm-output/ordering-backgroundtasks.yaml')
+      kubernetes: {
+        base: loadTextContent('helm-output/ordering-backgroundtasks.yaml')
+      }
     }
     container: {
       env: {
@@ -69,7 +73,9 @@ resource orderingsignalrhub 'Applications.Core/containers@2022-03-15-privateprev
   properties: {
     application: application
     runtimes: {
-      base: loadTextContent('helm-output/ordering-signalrhub.yaml')
+      kubernetes: {
+        base: loadTextContent('helm-output/ordering-signalrhub.yaml')
+      }
     }
     container: {
       env: {

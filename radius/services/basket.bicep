@@ -20,7 +20,9 @@ resource basket 'Applications.Core/containers@2022-03-15-privatepreview' = {
   properties: {
     application: application
     runtimes: {
-      base: loadTextContent('helm-output/basket-api.yaml')
+      kubernetes: {
+        base: loadTextContent('helm-output/basket-api.yaml')
+      }
     }
     container: {
       env: {

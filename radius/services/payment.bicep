@@ -17,7 +17,9 @@ resource payment 'Applications.Core/containers@2022-03-15-privatepreview' = {
   properties: {
     application: application
     runtimes: {
-      base: loadTextContent('helm-output/payment-api.yaml')
+      kubernetes: {
+        base: loadTextContent('helm-output/payment-api.yaml')
+      }
     }
     container: {
       env: {

@@ -19,7 +19,9 @@ resource identity 'Applications.Core/containers@2022-03-15-privatepreview' = {
   properties: {
     application: application
     runtimes: {
-      base: loadTextContent('helm-output/identity-api.yaml')
+      kubernetes: {
+        base: loadTextContent('helm-output/identity-api.yaml')
+      }
     }
     container: {
       env: {

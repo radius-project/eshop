@@ -20,7 +20,9 @@ resource catalog 'Applications.Core/containers@2022-03-15-privatepreview' = {
   properties: {
     application: application
     runtimes: {
-      base: loadTextContent('helm-output/catalog-api.yaml')
+      kubernetes: {
+        base: loadTextContent('helm-output/catalog-api.yaml')
+      }
     }
     container: {
       env: {

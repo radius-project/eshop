@@ -11,7 +11,9 @@ resource webshoppingagg 'Applications.Core/containers@2022-03-15-privatepreview'
   properties: {
     application: application
     runtimes: {
-      base: loadTextContent('helm-output/webshoppingagg.yaml')
+      kubernetes: {
+        base: loadTextContent('helm-output/webshoppingagg.yaml')
+      }
     }
   }
 }
@@ -23,7 +25,9 @@ resource webshoppingapigw 'Applications.Core/containers@2022-03-15-privateprevie
   properties: {
     application: application
     container: {
-      image: 'radius.azurecr.io/eshop-envoy:0.1.4'
+      kubernetes: {
+        image: 'radius.azurecr.io/eshop-envoy:0.1.4'
+      }
     }
   }
 }
