@@ -1,4 +1,4 @@
-apiVersion: rad.app/v1
+apiVersion: radius.app/v1
 kind: Recipe
 metadata:
   name: {{ template "nosql-data.fullname" . }}
