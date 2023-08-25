@@ -9,6 +9,13 @@ metadata:
     chart: {{ template "webshoppingagg.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}    
+  annotations:
+    radius.app/application: {{ .Values.app.name }}
+    radius.app/name: {{ .Values.app.svc.webshoppingagg }}
+    radius.app/connection-identity: {{ .Values.app.svc.identity }}
+    radius.app/connection-ordering: {{ .Values.app.svc.ordering }}
+    radius.app/connection-catalog: {{ .Values.app.svc.catalog }}
+    radius.app/connection-basket: {{ .Values.app.svc.basket }}
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:

@@ -7,6 +7,9 @@ metadata:
     chart: {{ template "payment-api.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
+  annotations:
+    radius.app/application: {{ .Values.app.name }}
+    radius.app/name: {{ .Values.app.svc.payment }}
 spec:
   type: {{ .Values.service.type }}
   ports:

@@ -13,6 +13,8 @@ metadata:
     heritage: {{ .Release.Service }}
 {{- with .Values.ingress.annotations }}
   annotations:
+    radius.app/application: {{ .Values.app.name }}
+    radius.app/name: {{ .Values.app.svc.spa }}
 {{ toYaml . | indent 4 }}
 {{- end }}
 {{- if and .Values.inf.tls.enabled .Values.inf.tls.issuer }}

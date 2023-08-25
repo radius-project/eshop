@@ -10,6 +10,12 @@ metadata:
     chart: {{ template "webmvc.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
+  annotations:
+    radius.app/application: {{ .Values.app.name }}
+    radius.app/name: {{ .Values.app.svc.mvc }}
+    radius.app/connection-identity: {{ .Values.app.svc.identity }}
+    radius.app/connection-webshoppingagg: {{ .Values.app.svc.webshoppingagg }}
+    radius.app/connection-orderingsignalrhub: {{ .Values.app.svc.orderingsignalrhub }}
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
