@@ -1,0 +1,9 @@
+apiVersion: rad.app/v1
+kind: Recipe
+metadata:
+  name: {{ template "keystore-data.fullname" . }}
+  annotations:
+    radius.app/application: {{ .Values.app.name }}
+    radius.app/name: {{ .Values.app.infra.keystoredata }}
+spec:
+  type: Applications.Datastores/redisCaches

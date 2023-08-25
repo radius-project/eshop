@@ -1,0 +1,9 @@
+apiVersion: rad.app/v1
+kind: Recipe
+metadata:
+  name: {{ template "nosql-data.fullname" . }}
+  annotations:
+    radius.app/application: {{ .Values.app.name }}
+    radius.app/name: {{ .Values.app.infra.nosqldata }}
+spec:
+  type: Applications.Datastores/mongoDatabases
