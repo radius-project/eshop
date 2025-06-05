@@ -57,11 +57,11 @@
     "ssri": ">=8.0.1",
     "tslib": "^2.0.0",
     "typedoc": "1.0.0-dev.4",
-    "webpack-dev-server": "^4.11.1",
+    "webpack-dev-server": "^5.2.2",
     "zone.js": "~0.11.4"
   },
   "devDependencies": {
-    "@angular-devkit/build-angular": "^15.2.0",
+    "@angular-devkit/build-angular": "^20.0.1",
     "@angular/cli": "15.2.0",
     "@angular/compiler-cli": "15.2.0",
     "@angular/language-service": "15.2.0",
