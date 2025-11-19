@@ -1,3 +1,5 @@
+# yaml-language-server: $schema=https://www.schemastore.org/github-action.json
+---
 name: "Deploy Helm to AKS"
 description: "Deploys a helm chart to AKS"
 
@@ -25,30 +27,30 @@ inputs:
     required: true
 
 runs:
-  using: "composite"
+  using: composite
   steps:
-  - uses: azure/login@v1
-    with:
-      creds: ${{ inputs.azure_credentials }}
+    - uses: azure/login@a457da9ea143d694b1b9c7c869ebb04ebe844ef5 # v2.3.0
+      with:
+        creds: ${{ inputs.azure_credentials }}
 
-  - uses: azure/aks-set-context@v1
-    name: Set AKS context
-    with:
-      creds: '${{ inputs.azure_credentials }}'
-      cluster-name: ${{ inputs.cluster_name }}
-      resource-group: ${{ inputs.resource_group }}
-  
-  - name: Set branch name as env variable
-    shell: bash
-    run: |
-      currentbranch=$(echo ${GITHUB_REF##*/})
-      echo "running on $currentbranch"
-      echo "BRANCH=$currentbranch" >> $GITHUB_ENV
-  
-  - name: Deploy Chart
-    shell: bash
-    run: |
-      ./deploy-chart.sh -c ${{ inputs.chart }} --dns aks --aks-name ${{ inputs.clusteR_name }} --aks-rg ${{ inputs.resource_group }} -r ${{ inputs.registry_host }} -t $TAG --namespace ${{ inputs.namespace }} --acr-connected
-    env:
-      TAG: ${{ env.BRANCH }}
-    working-directory: ${{ inputs.chart_root }}
+    - uses: azure/aks-set-context@c7eb093e5a5d47caa333f64974d5fd1cd4bf069d # v4.0.3
+      name: Set AKS context
+      with:
+        creds: "${{ inputs.azure_credentials }}"
+        cluster-name: ${{ inputs.cluster_name }}
+        resource-group: ${{ inputs.resource_group }}
+
+    - name: Set branch name as env variable
+      shell: bash
+      run: |
+        currentbranch=$(echo ${GITHUB_REF##*/})
+        echo "running on $currentbranch"
+        echo "BRANCH=$currentbranch" >> $GITHUB_ENV
+
+    - name: Deploy Chart
+      shell: bash
+      run: |
+        ./deploy-chart.sh -c ${{ inputs.chart }} --dns aks --aks-name ${{ inputs.clusteR_name }} --aks-rg ${{ inputs.resource_group }} -r ${{ inputs.registry_host }} -t $TAG --namespace ${{ inputs.namespace }} --acr-connected
+      env:
+        TAG: ${{ env.BRANCH }}
+      working-directory: ${{ inputs.chart_root }}
