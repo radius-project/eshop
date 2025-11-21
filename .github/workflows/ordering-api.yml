@@ -1,24 +1,26 @@
+# yaml-language-server: $schema=https://www.schemastore.org/github-workflow.json
+---
 name: ordering-api
 
 on:
   workflow_dispatch:
   push:
     branches:
-    - dev
+      - dev
 
     paths:
-    - src/BuildingBlocks/**
-    - src/Services/Ordering/**
-    - .github/workflows/ordering-api.yml
-  
+      - src/BuildingBlocks/**
+      - src/Services/Ordering/**
+      - .github/workflows/ordering-api.yml
+
   pull_request:
     branches:
-    - dev
+      - dev
 
     paths:
-    - src/BuildingBlocks/**
-    - src/Services/Ordering/**
-    - .github/workflows/ordering-api.yml
+      - src/BuildingBlocks/**
+      - src/Services/Ordering/**
+      - .github/workflows/ordering-api.yml
 env:
   SERVICE: ordering-api
   IMAGE: ordering.api
@@ -27,32 +29,33 @@ env:
   TESTS_PATH: Services/Ordering/Ordering.UnitTests
 
 jobs:
-
   BuildContainersForPR_Linux:
     runs-on: ubuntu-latest
     if: ${{ github.event_name == 'pull_request' }}
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
-    - uses: ./.github/workflows/composite/build-test
-      with:
-        service: ${{ env.SERVICE }}
-        registry_endpoint: ${{ secrets.REGISTRY_ENDPOINT }}
-        dotnet_version: ${{ env.DOTNET_VERSION }}
-        project_path: ${{ env.PROJECT_PATH }}
-        tests_path: ${{ env.TESTS_PATH }}
+      - name: Checkout code
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+
+      - uses: ./.github/workflows/composite/build-test
+        with:
+          service: ${{ env.SERVICE }}
+          registry_endpoint: ${{ secrets.REGISTRY_ENDPOINT }}
+          dotnet_version: ${{ env.DOTNET_VERSION }}
+          project_path: ${{ env.PROJECT_PATH }}
+          tests_path: ${{ env.TESTS_PATH }}
 
   BuildLinux:
     runs-on: ubuntu-latest
     if: ${{ github.event_name != 'pull_request' }}
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
-    - uses: ./.github/workflows/composite/build-push
-      with:
-        service: ${{ env.SERVICE }}
-        registry_host: ${{ secrets.REGISTRY_HOST }}
-        registry_endpoint: ${{ secrets.REGISTRY_ENDPOINT }}
-        image_name: ${{ env.IMAGE }}
-        registry_username: ${{ secrets.USERNAME }}
-        registry_password: ${{ secrets.PASSWORD }}
+      - name: Checkout code
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+
+      - uses: ./.github/workflows/composite/build-push
+        with:
+          service: ${{ env.SERVICE }}
+          registry_host: ${{ secrets.REGISTRY_HOST }}
+          registry_endpoint: ${{ secrets.REGISTRY_ENDPOINT }}
+          image_name: ${{ env.IMAGE }}
+          registry_username: ${{ secrets.USERNAME }}
+          registry_password: ${{ secrets.PASSWORD }}

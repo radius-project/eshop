@@ -1,3 +1,5 @@
+# yaml-language-server: $schema=https://www.schemastore.org/github-action.json
+---
 name: "Build for PRe"
 description: "Builds a docker image without pushing"
 
@@ -10,12 +12,12 @@ inputs:
     required: true
 
 runs:
-  using: "composite"
+  using: composite
   steps:
-  - name: Compose build ${{ inputs.service }}
-    shell: bash
-    run: sudo -E docker-compose build ${{ inputs.service }}
-    working-directory: ./src
-    env:
-      TAG: ${{ env.BRANCH }}
-      REGISTRY: ${{ inputs.registry_endpoint }}
+    - name: Compose build ${{ inputs.service }}
+      shell: bash
+      run: sudo -E docker-compose build ${{ inputs.service }}
+      working-directory: ./src
+      env:
+        TAG: ${{ env.BRANCH }}
+        REGISTRY: ${{ inputs.registry_endpoint }}

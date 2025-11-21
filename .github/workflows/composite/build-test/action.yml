@@ -1,3 +1,5 @@
+# yaml-language-server: $schema=https://www.schemastore.org/github-action.json
+---
 name: "Build for PRe"
 description: "Builds a docker image without pushing"
 
@@ -19,29 +21,29 @@ inputs:
     required: true
 
 runs:
-  using: "composite"
+  using: composite
   steps:
-  - name: Setup dotnet
-    uses: actions/setup-dotnet@v1
-    with:
-      dotnet-version: ${{ inputs.dotnet_version }}
+    - name: Setup dotnet
+      uses: actions/setup-dotnet@d4c94342e560b34958eacfc5d055d21461ed1c5d # v5.0.0
+      with:
+        dotnet-version: ${{ inputs.dotnet_version }}
 
-  - name: Build and run unit tests
-    shell: bash
-    run: |
-      cd src
-      dotnet restore "eShopOnContainers-ServicesAndWebApps.sln"
-      cd ${{ inputs.project_path }}
-      dotnet build --no-restore
-      cd -
-      cd ${{ inputs.tests_path }}
-      dotnet build --no-restore
-      dotnet test --no-build -v=normal
+    - name: Build and run unit tests
+      shell: bash
+      run: |
+        cd src
+        dotnet restore "eShopOnContainers-ServicesAndWebApps.sln"
+        cd ${{ inputs.project_path }}
+        dotnet build --no-restore
+        cd -
+        cd ${{ inputs.tests_path }}
+        dotnet build --no-restore
+        dotnet test --no-build -v=normal
 
-  - name: Compose build ${{ inputs.service }}
-    shell: bash
-    run: sudo -E docker-compose build ${{ inputs.service }}
-    working-directory: ./src
-    env:
-      TAG: ${{ env.BRANCH }}
-      REGISTRY: ${{ inputs.registry_endpoint }}
+    - name: Compose build ${{ inputs.service }}
+      shell: bash
+      run: sudo -E docker-compose build ${{ inputs.service }}
+      working-directory: ./src
+      env:
+        TAG: ${{ env.BRANCH }}
+        REGISTRY: ${{ inputs.registry_endpoint }}

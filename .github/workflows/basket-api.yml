@@ -1,52 +1,53 @@
+# yaml-language-server: $schema=https://www.schemastore.org/github-workflow.json
+---
 name: basket-api
 
 on:
   workflow_dispatch:
   push:
     branches:
-    - dev
+      - dev
 
     paths:
-    - src/BuildingBlocks/**
-    - src/Services/Basket/**
-    - .github/workflows/basket-api.yml
-  
+      - src/BuildingBlocks/**
+      - src/Services/Basket/**
+      - .github/workflows/basket-api.yml
+
   pull_request:
     branches:
-    - dev
+      - dev
 
     paths:
-    - src/BuildingBlocks/**
-    - src/Services/Basket/**
-    - .github/workflows/basket-api.yml
+      - src/BuildingBlocks/**
+      - src/Services/Basket/**
+      - .github/workflows/basket-api.yml
 env:
   SERVICE: basket-api
   IMAGE: basket.api
 
 jobs:
-
   BuildContainersForPR_Linux:
     runs-on: ubuntu-latest
     if: ${{ github.event_name == 'pull_request' }}
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
-    - uses: ./.github/workflows/composite/build
-      with:
-        service: ${{ env.SERVICE }}
-        registry_endpoint: ${{ secrets.REGISTRY_ENDPOINT }}
+      - name: Checkout code
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+      - uses: ./.github/workflows/composite/build
+        with:
+          service: ${{ env.SERVICE }}
+          registry_endpoint: ${{ secrets.REGISTRY_ENDPOINT }}
 
   BuildLinux:
     runs-on: ubuntu-latest
     if: ${{ github.event_name != 'pull_request' }}
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
-    - uses: ./.github/workflows/composite/build-push
-      with:
-        service: ${{ env.SERVICE }}
-        registry_host: ${{ secrets.REGISTRY_HOST }}
-        registry_endpoint: ${{ secrets.REGISTRY_ENDPOINT }}
-        image_name: ${{ env.IMAGE }}
-        registry_username: ${{ secrets.USERNAME }}
-        registry_password: ${{ secrets.PASSWORD }}
+      - name: Checkout code
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+      - uses: ./.github/workflows/composite/build-push
+        with:
+          service: ${{ env.SERVICE }}
+          registry_host: ${{ secrets.REGISTRY_HOST }}
+          registry_endpoint: ${{ secrets.REGISTRY_ENDPOINT }}
+          image_name: ${{ env.IMAGE }}
+          registry_username: ${{ secrets.USERNAME }}
+          registry_password: ${{ secrets.PASSWORD }}
